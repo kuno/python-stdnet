@@ -27,9 +27,10 @@ the :attr:`StdModel._meta` attribute.
     ObjectNotFound = ObjectNotFound
     
     def __init__(self, **kwargs):
+        pop = kwargs.pop
         for field in self._meta.scalarfields:
             name = field.name
-            value = kwargs.pop(name,None)
+            value = pop(name,None)
             if value is None:
                 value = field.get_default()
             setattr(self,name,value)
@@ -52,7 +53,7 @@ otherwise a :class:`stdnet.exceptions.ModelNotRegistered` exception will raise.'
         meta = self._meta
         if not meta.cursor:
             raise ModelNotRegistered('Model %s is not registered with a backend database. Cannot save any instance.' % meta.name)
-        data = []
+        data = {}
         indexes = []
         #Loop over scalar fields first
         for field in meta.scalarfields:
@@ -61,7 +62,7 @@ otherwise a :class:`stdnet.exceptions.ModelNotRegistered` exception will raise.'
             serializable = field.serialize(value)
             if serializable is None and field.required:
                 raise FieldError('Field %s has no value for %s' % (field,self))
-            data.append(serializable)
+            data[name] = serializable
             if field.index:
                 indexes.append((field,serializable))
         self.id = meta.pk.serialize(self.id)

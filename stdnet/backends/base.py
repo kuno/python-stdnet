@@ -107,13 +107,13 @@ an :class:`stdnet.exceptions.ObjectNotFound` exception.
         meta  = obj._meta
         timeout = meta.timeout
         cache = self._cachepipe
-        hash  = meta.table()
         objid = obj.id
-        hash.add(objid, data)
+        hash  = meta.table(objid)
+        hash.update(data)
         
         # Create indexes if possible
         for field,value in indexes:
-            key     = meta.basekey(field.name,value)
+            key     = meta.key_index(field.name,value)
             if field.unique:
                 index = self.index_keys(key, timeout)
             else:

@@ -1,11 +1,7 @@
 import sys
 import copy
 
-try:
-    from itertools import izip as zip
-except ImportError:
-    pass
-
+from stdnet.utils import zip
 from stdnet.orm import signals
 from stdnet.exceptions import *
 
@@ -75,10 +71,10 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
         self.maker        = lambda : model.__new__(model)
         model._meta       = self
         hashmodel(model)
-        
-        try:
+
+        if id in fields:
             pk = fields['id']
-        except:
+        else:
             pk = AutoField(primary_key = True)
         pk.register_with_model('id',model)
         self.pk = pk
@@ -97,14 +93,12 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
         
     def __repr__(self):
         if self.app_label:
-            return '%s.%s' % (self.app_label,self.name)
+            return '{0}.{1}'.format(self.app_label,self.name)
         else:
             return self.name
-    
-    def __str__(self):
-        return self.__repr__()
+    __str__ = __repr__
         
-    def basekey(self, *args):
+    def basekey(self, arg = ''):
         '''Calculate the key to access model hash-table, and model filters in the database.
         For example::
         
@@ -112,25 +106,30 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
             >>> a.meta.basekey()
             'stdnet:author'
             '''
-        key = '%s%s' % (self.keyprefix,self.name)
-        for arg in args:
-            key = '%s:%s' % (key,arg)
-        return key
+        return '{0}{1}{2}'.format(self.keyprefix,self,arg)
     
     def autoid(self):
-        return self.basekey('ids')
+        '''Return the key for the autoincrement id.'''
+        return self.basekey(':ids')
     
-    @property
-    def uniqueid(self):
-        '''Unique id for an instance. This is unique across multiple model types.'''
-        return self.basekey(self.id)
+    def key_idset(self):
+        return self.basekey(':idset')
     
-    def table(self):
+    def key_hash(self, id):
+        '''Return the key for the hash containing the instance with id ``id``.'''
+        return self.basekey(':hash:{0}'.format(id))
+    
+    def key_index(self, field_name, value):
+        '''Return the key for the index of field of
+``field_name`` with ``value``.'''
+        return self.basekey(':index:{0}:{1}'.format(field_name,value))
+    
+    def table(self, id):
         '''Return an instance of :class:`stdnet.HashTable` holding
 the model table'''
         if not self.cursor:
             raise ModelNotRegistered('%s not registered. Call orm.register(model_class) to solve the problem.' % self)
-        return self.cursor.hash(self.basekey(),self.timeout)
+        return self.cursor.hash(self.key_hash(id),self.timeout)
     
     def make(self, id, data):
         '''Create a model instance from server data'''
