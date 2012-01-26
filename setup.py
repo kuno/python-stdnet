@@ -21,7 +21,7 @@ try:
     from vendor.setup import libparams
 except ImportError:
     libparams = {'cmdclass': {}}
-# Switch this of for now    
+# Switch this of for now
 libparams = {'cmdclass': {}}
 
 
@@ -43,7 +43,7 @@ for scheme in INSTALL_SCHEMES.values():
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
- 
+
 def fullsplit(path, result=None):
     """
     Split a pathname into components (the opposite of os.path.join) in a
@@ -57,7 +57,7 @@ def fullsplit(path, result=None):
     if head == path:
         return result
     return fullsplit(head, [tail] + result)
- 
+
 # Compile the list of packages available, because distutils doesn't have
 # an easy way to do this.
 def get_rel_dir(d,base,res=''):
@@ -89,7 +89,7 @@ for dirpath, dirnames, filenames in os.walk(package_dir):
 if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
     for file_info in data_files:
         file_info[0] = '\\PURELIB\\%s' % file_info[0]
-        
+
 
 libparams.update({
         'name': package_fullname,

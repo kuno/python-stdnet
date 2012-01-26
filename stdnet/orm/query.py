@@ -365,24 +365,26 @@ class M2MRelatedManager(Manager):
         self.st = st
         self.to_name = to_name
 
-    def add(self, value):
+    def add(self, *values):
         '''Add *value*, an instance of self.to'''
-        if not isinstance(value,self.to):
-            raise FieldValueError(
-                        '%s is not an instance of %s' % (value,self.to._meta))
-        if value not in self.st:
-            related = getattr(value,self.to_name)
-            self._add(value)
-            related._add(self.instance)
+        for value in values:
+            if not isinstance(value,self.to):
+                raise FieldValueError(
+                    '%s is not an instance of %s' % (value,self.to._meta))
+            if value not in self.st:
+                related = getattr(value,self.to_name)
+                self._add(value)
+                related._add(self.instance)
 
-    def remove(self, value):
-        if not isinstance(value,self.to):
-            raise FieldValueError(
-                        '%s is not an instance of %s' % (value,self.to._meta))
-        if value in self.st:
-            related = getattr(value,self.to_name)
-            self.st.discard(value)
-            related.st.discard(self.instance)
+    def remove(self, *values):
+        for value in values:
+            if not isinstance(value, self.to):
+                raise FieldValueError(
+                    '%s is not an instance of %s' % (value,self.to._meta))
+            if value in self.st:
+                related = getattr(value,self.to_name)
+                self.st.discard(value)
+                related.st.discard(self.instance)
 
     def _add(self, value):
         self.st.add(value)
@@ -401,6 +403,3 @@ class UnregisteredManager(object):
     def __getattr__(self, name):
         raise ModelNotRegistered('Model %s is not registered with\
  a backend' % self.model.__name__)
-
-
-

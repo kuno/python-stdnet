@@ -16,7 +16,7 @@ If not an the instance is not the same an exception is raised.'''
         r = model.objects.get(**{fieldname:value})
     except model.DoesNotExist:
         return value
-    
+
     if instance and r.id == instance.id:
         return value
     else:
