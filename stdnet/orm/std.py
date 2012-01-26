@@ -17,17 +17,17 @@ __all__ = ['ManyFieldManagerProxy',
 
 
 class ManyFieldManagerProxy(GetStructureMixin):
-    
+
     def __init__(self, name, stype, pickler, converter, scorefun):
         self.name    = name
         self.stype   = stype
         self.pickler = pickler
         self.converter = converter
         self.scorefun  = scorefun
-        
+
     def get_cache_name(self):
         return '_%s_cache' % self.name
-    
+
     def __get__(self, instance, instance_type=None):
         if instance is None:
             return self
@@ -41,19 +41,19 @@ class ManyFieldManagerProxy(GetStructureMixin):
             rel_manager = self.get_related_manager(instance)
             setattr(instance, cache_name, rel_manager)
             return rel_manager
-        
+
     def get_related_manager(self, instance):
         return self.get_structure(instance)
 
 
 class Many2ManyManagerProxy(ManyFieldManagerProxy):
-    
+
     def __init__(self, name, stype, to_name, to):
         super(Many2ManyManagerProxy,self).__init__(
                         name, stype, ModelFieldPickler(to), None, None)
         self.to_name = to_name
         self.to = to
-        
+
     def get_related_manager(self, instance):
         st = self.get_structure(instance)
         return M2MRelatedManager(instance,self.to,st,self.to_name)
@@ -61,36 +61,36 @@ class Many2ManyManagerProxy(ManyFieldManagerProxy):
 
 class MultiField(Field):
     '''Virtual class for data-structure fields:
-    
+
 .. attribute:: relmodel
 
     Optional :class:`stdnet.otm.StdModel` class contained in the structure.
     It can also be specified as a string.
-    
+
 .. attribute:: related_name
 
     Same as :class:`stdnet.orm.ForeignKey` Field.
-    
+
 .. attribute:: pickler
 
     a module/class/objects used to serialize values.
-    
+
     Default ``None``.
-    
+
 .. attribute:: converter
 
     a module/class/objects used to convert keys to suitable string to use
     as keys in :class:`stdnet.HashTable` structures.
     It must implement two methods, ``tokey`` to convert key to a suitable key
     for the database backend and ``tovalue`` the inverse operation.
-    
+
     Default: ``None``.
 '''
     default_pickler = encoders.Json()
-    
+
     def get_pipeline(self):
         raise NotImplementedError
-    
+
     def __init__(self,
                  model = None,
                  pickler = None,
@@ -110,14 +110,14 @@ class MultiField(Field):
         self.related_name = related_name
         self.converter    = converter
         self.scorefun     = scorefun
-        
+
     def register_with_model(self, name, model):
         super(MultiField,self).register_with_model(name, model)
         if self.relmodel:
             add_lazy_relation(self,self.relmodel,self._register_related_model)
         else:
             self._register_related_model(self,None)
-            
+
     def _register_related_model(self, field, related):
         field.relmodel = related
         if related and not field.pickler:
@@ -132,10 +132,10 @@ class MultiField(Field):
 
     def add_to_fields(self):
         self.model._meta.multifields.append(self)
-        
+
     def to_python(self, instance):
         return None
-    
+
     def id(self, obj):
         return getattr(obj,self.attname).id
 
@@ -153,9 +153,9 @@ When accessed from the model instance, it returns an instance of
         username  = orm.AtomField(unique = True)
         password  = orm.AtomField()
         following = orm.SetField(model = 'self')
-    
+
 It can be used in the following way::
-    
+
     >>> user = User(username = 'lsbardel', password = 'mypassword').save()
     >>> user2 = User(username = 'pippo', password = 'pippopassword').save()
     >>> user.following.add(user2)
@@ -166,7 +166,7 @@ It can be used in the following way::
     type = 'set'
     def get_pipeline(self):
         return 'oset' if self.ordered else 'set'
-    
+
 
 class ListField(MultiField):
     '''A field maintaining a list of values.
@@ -176,12 +176,12 @@ it returns an instance of :class:`stdnet.List` structure. For example::
     class UserMessage(orm.StdModel):
         user = orm.SymbolField()
         messages = orm.ListField()
-    
+
 Lets register it with redis::
 
     >>> orm.register(UserMessage,''redis://127.0.0.1:6379/?db=11')
     'redis db 7 on 127.0.0.1:6379'
-    
+
 Can be used as::
 
     >>> m = UserMessage(user = 'pippo').save()
@@ -195,7 +195,7 @@ Can be used as::
     '''
     type = 'list'
     def get_pipeline(self):
-        return 'list'          
+        return 'list'
 
 
 class HashField(MultiField):
@@ -216,15 +216,15 @@ as extra argument.
 
     Optional name to use for the relation from the related object
     back to ``self``.
-    
-    
+
+
 For example::
-    
+
     class User(orm.StdModel):
         name      = orm.SymbolField(unique = True)
         following = orm.ManyToManyField(model = 'self',
                                         related_name = 'followers')
-    
+
 To use it::
 
     >>> u = User(name = 'luca').save()
@@ -234,17 +234,17 @@ To use it::
 and to remove::
 
     >>> u.following.remove(User.objects.get(name = 'john))
-    
+
 This field is implemented as a double Set field.
 '''
     type = 'many-to-many'
     def get_pipeline(self):
         return 'set'
-    
+
     def register_with_model(self, name, model):
         Field.register_with_model(self, name, model)
         add_lazy_relation(self,self.relmodel,self._register_related_model)
-    
+
     def _register_related_model(self, field, related):
         #Register manager to self and to the related model
         related_name = self.related_name or '%s_set' % self.name
@@ -255,6 +255,6 @@ This field is implemented as a double Set field.
                             stype, related_name, related))
         setattr(self.relmodel,related_name,Many2ManyManagerProxy(related_name,
                                         stype, self.name, self.model))
-    
+
     def todelete(self):
         return False

@@ -5,7 +5,7 @@ from stdnet.utils import zip, UnicodeMixin
 from stdnet import dispatch
 
 from .base import StdNetType, FakeModelType
-from .globals import get_model_from_hash 
+from .globals import get_model_from_hash
 from .signals import *
 
 
@@ -19,22 +19,22 @@ __all__ = ['FakeModel',
 class ModelMixin(UnicodeMixin):
     DoesNotExist = ObjectNotFound
     DoesNotValidate = ObjectNotValidated
-    
+
     def __eq__(self, other):
         if other.__class__ == self.__class__:
             return self.id == other.id
         else:
             return False
-        
+
     def __ne__(self, other):
         return not self.__eq__(other)
-    
+
     def __hash__(self):
         try:
             return hash(self.uuid)
         except self.DoesNotExist as e:
             raise TypeError(str(e))
-        
+
     @property
     def uuid(self):
         '''Universally unique identifier for a model instance.'''
@@ -42,8 +42,8 @@ class ModelMixin(UnicodeMixin):
             raise self.DoesNotExist(\
                     'Object not saved. Cannot obtain universally unique id')
         return '{0}.{1}'.format(self._meta.hash,self.id)
-        
-    
+
+
 FakeModelBase = FakeModelType('FakeModelBase',(ModelMixin,),{})
 StdNetBase = StdNetType('StdNetBase',(ModelMixin,),{})
 
@@ -67,14 +67,14 @@ the :attr:`StdModel._meta` attribute.
 .. attribute:: id
 
     Model instance id. The instance primary key.
-        
+
 .. attribute:: uuid
 
     Universally unique identifier for a model instance.
-    
+
 '''
     is_base_class = True
-    
+
     def __init__(self, **kwargs):
         for field in self._meta.scalarfields:
             name = field.name
@@ -87,10 +87,10 @@ the :attr:`StdModel._meta` attribute.
             raise ValueError("'%s' is an invalid keyword argument for %s" %\
                               (kwargs.keys()[0],self._meta))
         self.afterload()
-        
+
     def afterload(self):
         self._cachepipes = {}
-    
+
     def save(self, transaction = None, skip_signal = False):
         '''Save the instance.
 The model must be registered with a :class:`stdnet.backends.BackendDataServer`
@@ -102,16 +102,16 @@ otherwise a :class:`stdnet.ModelNotRegistered` exception will raise.
                         and it is much faster).
                         Check the :ref:`transaction <model-transactions>`
                         documentation for more information.
-                        
+
                         Default: ``None``.
-                        
+
 :parameter skip_signal: When saving an instance, :ref:`signals <signal-api>`
                         are sent just before and just after saving. If
                         this flag is set to ``False``, those signals
                         are not used in the function call.
-                        
+
                         Default: ``False``
-                        
+
 The method return ``self``.
 '''
         send_signal = not transaction and not skip_signal
@@ -126,7 +126,7 @@ The method return ``self``.
             post_save.send(sender=self.__class__,
                            instance = r)
         return r
-    
+
     def is_valid(self):
         '''Return ``True`` if the model validates.
 It check all fields agains their respective validation algorithm.'''
@@ -135,19 +135,19 @@ It check all fields agains their respective validation algorithm.'''
     def _valattr(self, name):
         if hasattr(self,self._meta.VALATTR):
             return getattr(self,self._meta.VALATTR)[name]
-            
+
     @property
     def cleaned_data(self):
         return self._valattr('data')
-        
+
     @property
     def errors(self):
         return self._valattr('errors')
-        
+
     @property
     def indices(self):
         return self._valattr('indices')
-    
+
     def delete(self, transaction = None):
         '''Delete an instance from database.
 If the instance is not available (it does not have an id) and
@@ -167,7 +167,7 @@ If the instance is not available (it does not have an id) and
         res = T + meta.cursor.delete_object(self, transaction)
         post_delete.send(sender=self.__class__, instance = self)
         return res
-    
+
     def related_objects(self):
         '''A generator of related objects'''
         objs = []
@@ -175,7 +175,7 @@ If the instance is not available (it does not have an id) and
             rmanager = getattr(self,rel)
             for obj in rmanager.all():
                 yield obj
-    
+
     def todict(self):
         odict = {}
         for field in self._meta.scalarfields:
@@ -184,15 +184,15 @@ If the instance is not available (it does not have an id) and
             if value:
                 odict[field.name] = value
         return odict
-    
+
     # UTILITY METHODS
-    
+
     def instance_keys(self):
         '''Utility method for returning keys associated with
 this instance only. The instance id
 is however available in other keys (indices and other backend containers).'''
         return self._meta.cursor.instance_keys(self)
-    
+
     @classmethod
     def flush(cls, count = None):
         '''Flush the model table and all related tables including all indexes.
@@ -200,7 +200,7 @@ Calling flush will erase everything about the model
 instances in the remote server. If count is a dictionary, the method
 will enumerate the number of object to delete. without deleting them.'''
         return cls._meta.flush(count)
-    
+
     @classmethod
     def transaction(cls):
         '''Return a transaction instance.'''
@@ -209,12 +209,12 @@ will enumerate the number of object to delete. without deleting them.'''
             raise ModelNotRegistered("Model '{0}' is not registered with a\
  backend database. Cannot start a transaction.".format(cls._meta))
         return c.transaction()
-    
+
     # PICKLING SUPPORT
-    
+
     def __getstate__(self):
         return (self.id, self.todict())
-    
+
     def __setstate__(self, state):
         id,data = state
         meta = self._meta
@@ -224,7 +224,7 @@ will enumerate the number of object to delete. without deleting them.'''
             value = field.value_from_data(self,data)
             setattr(self,field.attname,field.to_python(value))
         self.afterload()
-    
+
 
 def from_uuid(uuid):
     '''Retrieve an instance of a :class:`stdnet.orm.StdModel`
@@ -238,8 +238,8 @@ instance an exception will raise.'''
                         'model id "{0}" not available'.format(elems[0]))
         return model.objects.get(id = elems[1])
     raise StdModel.DoesNotExist('uuid "{0}" not recognized'.format(uuid))
-    
-    
+
+
 def model_to_dict(instance, fields = None, exclude = None):
     if isinstance(instance,StdModel):
         return instance.todict()
@@ -250,4 +250,3 @@ def model_to_dict(instance, fields = None, exclude = None):
             if default:
                 d[field.name] = default
         return d
-                

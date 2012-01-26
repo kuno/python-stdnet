@@ -22,11 +22,11 @@ def get_fields(bases, attrs):
     for base in bases:
         if hasattr(base, '_meta'):
             fields.update(copy.deepcopy(base._meta.dfields))
-    
+
     for name,field in list(attrs.items()):
         if isinstance(field,Field):
             fields[name] = attrs.pop(name)
-    
+
     return fields
 
 
@@ -42,19 +42,19 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
 .. attribute:: model
 
     a subclass of :class:`stdnet.orm.StdModel`.
-    
+
 .. attribute:: ordering
 
     Optional name of a :class:`stdnet.orm.Field` in the :attr:`model`.
     If provided, indeces will be sorted with respect the value of the field specidied.
     Check the :ref:`sorting <sorting>` documentation for more details.
-    
+
     Default: ``None``.
-    
+
 .. attribute:: fields
 
     dictionary of :class:`stdnet.orm.Field` instances.
-    
+
 .. attribute:: abstract
 
     if ``True``, it represents an abstract model and no database elements are created.
@@ -63,9 +63,9 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
 
     prefix for the database table. By default it is given by ``settings.DEFAULT_KEYPREFIX``,
     where ``settings`` is obtained by::
-    
+
         from dynts.conf import settings
-    
+
 .. attribute:: pk
 
     primary key ::class:`stdnet.orm.Field`
@@ -73,7 +73,7 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
 '''
     VALATTR = '_validation'
     searchengine = None
-    
+
     def __init__(self, model, fields,
                  abstract = False, keyprefix = None,
                  app_label = '', verbose_name = None,
@@ -93,7 +93,7 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
         self.verbose_name = verbose_name or self.name
         model._meta = self
         hashmodel(model)
-        
+
         # Check if ID field exists
         try:
             pk = fields['id']
@@ -104,14 +104,14 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
         self.pk = pk
         if not self.pk.primary_key:
             raise FieldError("Primary key must be named id")
-        
+
         for name,field in fields.items():
             if name == 'id':
                 continue
             field.register_with_model(name,model)
             if field.primary_key:
                 raise FieldError("Primary key already available %s." % name)
-        
+
         self.ordering = None
         if ordering:
             self.ordering = self.get_sorting(ordering,ImproperlyConfigured)
@@ -119,27 +119,27 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
         for scalar in self.scalarfields:
             if scalar.index:
                 self.indices.append(scalar)
-        
+
     def maker(self):
         model = self.model
         m = model.__new__(model)
         m.afterload()
         return m
-        
+
     def __repr__(self):
         if self.app_label:
             return '%s.%s' % (self.app_label,self.name)
         else:
             return self.name
-    
+
     def __str__(self):
         return self.__repr__()
-        
+
     def basekey(self, *args):
         """Calculate the key to access model data in
 the backend server.
 The key is an encoded binary string. For example::
-        
+
     >>> from examples.models import User
     >>> from orm import register
     >>> register(User)
@@ -152,16 +152,16 @@ The key is an encoded binary string. For example::
             if arg is not None:
                 key = '%s:%s' % (key,arg)
         return key
-    
+
     def tempkey(self, name = None):
         if not name:
             name = str(uuid4())[:8]
         return self.basekey('tmp',name)
-    
+
     def autoid(self):
         '''The id for autoincrements ids'''
         return self.basekey('ids')
-    
+
     def is_valid(self, instance):
         '''Perform validation for *instance* and stores serialized data,
 indexes and errors into local cache.
@@ -195,14 +195,14 @@ Return ``True`` if the instance is ready to be saved to database.'''
                         if field.index:
                             indexes.append((field,svalue))
         return len(errors) == 0
-                
+
     def table(self, transaction = None):
         '''Return an instance of :class:`stdnet.HashTable` holding
 the model table'''
         if not self.cursor:
             raise ModelNotRegistered('%s not registered. Call orm.register(model_class) to solve the problem.' % self)
         return self.cursor.hash(self.basekey(),self.timeout,transaction=transaction)
-    
+
     def flush(self, count = None):
         '''Fast method for clearing the whole table including related tables'''
         for rel in self.related.values():
@@ -244,12 +244,12 @@ the model table'''
         gen = (field.id(instance) for field in self.multifields\
                                          if field.todelete())
         return [fid for fid in gen if fid]
-    
-    
+
+
 class FakeMeta(object):
     pass
-        
-    
+
+
 class FakeModelType(type):
     '''StdModel python metaclass'''
     def __new__(cls, name, bases, attrs):
@@ -260,7 +260,7 @@ class FakeModelType(type):
             return new_class
         new_class._meta = FakeMeta()
         hashmodel(new_class)
-        return new_class  
+        return new_class
 
 
 class StdNetType(type):
@@ -270,41 +270,41 @@ class StdNetType(type):
         parents = [b for b in bases if isinstance(b, StdNetType)]
         if not parents or attrs.pop('is_base_class',False):
             return super_new(cls, name, bases, attrs)
-        
+
         # remove the Meta class if present
         meta      = attrs.pop('Meta', None)
         if meta:
             kwargs   = meta_options(**meta.__dict__)
         else:
             kwargs   = meta_options()
-        
+
         #if kwargs['abstract']:
         #    return super_new(cls, name, bases, attrs)
-        
+
         # remove and build field list
-        fields    = get_fields(bases, attrs)        
+        fields    = get_fields(bases, attrs)
         # create the new class
         objects   = attrs.pop('objects',None)
         new_class = super_new(cls, name, bases, attrs)
         new_class.objects = objects
         app_label = kwargs.pop('app_label')
-        
+
         if app_label is None:
             model_module = sys.modules[new_class.__module__]
             try:
                 app_label = model_module.__name__.split('.')[-2]
             except:
                 app_label = ''
-        
+
         meta = Metaclass(new_class,fields,app_label=app_label,**kwargs)
         if objects is None:
             new_class.objects = UnregisteredManager(new_class)
         signals.class_prepared.send(sender=new_class)
         return new_class
-    
+
     def __str__(cls):
         return str(cls._meta)
-    
+
 
 def meta_options(abstract = False,
                  keyprefix = None,
@@ -315,5 +315,3 @@ def meta_options(abstract = False,
             'keyprefix': keyprefix,
             'app_label':app_label,
             'ordering':ordering}
-    
-

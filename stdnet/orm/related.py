@@ -7,16 +7,16 @@ RECURSIVE_RELATIONSHIP_CONSTANT = 'self'
 
 
 class ModelFieldPickler(object):
-    
+
     def __init__(self, model):
         self.model = model
-        
+
     def loads(self, s):
         return self.model.objects.get(id = s)
-    
+
     def dumps(self, obj):
         return obj.id
-    
+
 
 def add_lazy_relation(field, relation, operation):
     '''Adapted from django. Adds a lookup on ``cls`` when a related field is defined using a string.'''
@@ -40,8 +40,8 @@ def add_lazy_relation(field, relation, operation):
         key = (app_label, model_name)
         value = (field, operation)
         pending_lookups.setdefault(key, []).append(value)
-        
-        
+
+
 def do_pending_lookups(sender, **kwargs):
     """Handle any pending relations to the sending model. Sent from class_prepared.
     """
@@ -140,7 +140,7 @@ def _register_container_model(field, related):
 
 
 class RelatedObject(object):
-    
+
     def __init__(self,
                  model,
                  related_name = None,
@@ -150,9 +150,6 @@ class RelatedObject(object):
         self.relmodel     = model
         self.related_name = related_name
         self.relmanager   = relmanager
-    
+
     def register_with_related_model(self):
         add_lazy_relation(self,self.relmodel,_register_related)
-        
-
-        

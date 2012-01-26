@@ -21,7 +21,7 @@ __all__ = ['clearall',
            'Manager',
            'UnregisteredManager']
 
-    
+
 def clearall(exclude = None):
     global _GLOBAL_REGISTRY
     exclude = exclude or []
@@ -36,7 +36,7 @@ def models_from_names(names):
     for m in _GLOBAL_REGISTRY:
         if str(m._meta) in s:
             yield m
-    
+
 
 def flush_models(includes = None, excludes = None):
     '''Utility for flushing models data.
@@ -56,42 +56,42 @@ It removes all keys associated with models.'''
             model.flush()
             flushed.append(str(model._meta))
     return flushed
-            
+
 
 def register(model, backend = None, keyprefix = None, timeout = None,
              ignore_duplicates = True):
     '''Low level function for registering a :class:`stdnet.orm.StdModel`
 model with a :class:`stdnet.backends.BackendDataServer` data server.
-    
+
 :parameter model: a :class:`stdnet.orm.StdModel` class. Must be provided.
 
 :parameter backend: a backend connection string.
-                    
+
                     Default ``settings.DEFAULT_BACKEND``.
-                    
+
 :parameter keyprefix: a string used to prefix all database keys related
                       to the model. If not provided it is calculated
                       from the connection string.
-                      
+
                       Default ``None``.
-                      
+
 :parameter timeout: timeout in seconds for keys persistence.
                     If not provided it is calculated from the
                     connection string.
-                    
+
                     Default ``None``.
-    
+
 **Usage**
-    
+
 For Redis the syntax is the following::
 
     import orm
-    
+
     orm.register(Author, 'redis://my.host.name:6379/?db=1')
     orm.register(Book, 'redis://my.host.name:6379/?db=2')
-    orm.register(MyOtherModel, 
+    orm.register(MyOtherModel,
                 'redis://my.host.name:6379/?db=2&keyprefix=differentprefix')
-    
+
 ``my.host.name`` can be ``localhost`` or an ip address or a domain name,
 while ``db`` indicates the database number (very useful for separating data
 on the same redis instance).'''
@@ -100,7 +100,7 @@ on the same redis instance).'''
     backend = backend or settings.DEFAULT_BACKEND
     meta = model._meta
     if model in _GLOBAL_REGISTRY:
-        if not ignore_duplicates:  
+        if not ignore_duplicates:
             raise AlreadyRegistered(
                         'Model {0} is already registered'.format(meta))
         else:
@@ -125,11 +125,11 @@ on the same redis instance).'''
 
 
 def unregister(model):
-    global _GLOBAL_REGISTRY 
+    global _GLOBAL_REGISTRY
     _GLOBAL_REGISTRY.pop(model,None)
     model._meta.cursor = None
-    
-    
+
+
 def model_iterator(application):
     '''\
 Returns a generatotr of :class:`stdnet.orm.StdModel` classes found
@@ -141,10 +141,10 @@ in the ``models`` module of an ``application`` dotted path.
 For example::
 
     from stdnet.orm import model_iterator
-    
+
     APPS = ('stdnet.contrib.searchengine',
             'stdnet.contrib.timeseries')
-    
+
     for model in model_iterator(APPS):
         ...
 
@@ -161,7 +161,7 @@ For example::
             mod_models = import_module('.models',application)
         except ImportError:
             raise StopIteration
-        
+
         for name in dir(mod_models):
             model = getattr(mod_models,name)
             if isinstance(model,StdNetType) and hasattr(model,'_meta'):
@@ -189,7 +189,7 @@ It return a generator.
                         a ``models`` module where models are implemented.
 :parameter models: list of models to include or ``None`` (all models).
                    Default ``None``.
-                   
+
 For example::
 
     register_application_models('mylib.myapp')
@@ -220,4 +220,3 @@ It return s a list of registered models.'''
 
 
 _GLOBAL_REGISTRY = {}
-

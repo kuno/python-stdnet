@@ -41,14 +41,14 @@ def makeoptions():
                         help="Include develepment tags, comma separated")
     return parser
 
-    
+
 def addpath(test_type):
     # add the tests directory to the Python Path
     p = os.path
     CUR_DIR = os.path.split(os.path.abspath(__file__))[0]
     if CUR_DIR not in sys.path:
         sys.path.insert(0, CUR_DIR)
-    
+
     CONTRIB_DIR  = os.path.dirname(contrib.__file__)
     TEST_DIR = p.join(CUR_DIR,'tests')
     if TEST_DIR not in sys.path:
@@ -56,13 +56,13 @@ def addpath(test_type):
 
     return (lambda test_type : os.path.join(TEST_DIR,test_type),
             lambda test_type : CONTRIB_DIR)
-    
+
 
 if __name__ == '__main__':
     options = makeoptions().parse_args()
     paths = addpath(options.test_type)
     settings.REDIS_PARSER = options.parser
-    
+
     run(paths,
         tags = options.labels,
         library = 'stdnet',

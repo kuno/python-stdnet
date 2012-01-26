@@ -13,10 +13,10 @@ class Word(orm.StdModel):
     # denormalised fields for frequency
     frequency = orm.IntegerField(default = 0)
     model_frequency = orm.HashField()
-    
+
     def __unicode__(self):
         return self.id
-    
+
     def update_frequency(self):
         f = 0
         mf = {}
@@ -43,17 +43,17 @@ class WordItem(orm.StdModel):
     object_id = orm.SymbolField()
     '''Model instance id'''
     count = orm.IntegerField(index = False, default = 1)
-    
+
     def __unicode__(self):
         return self.word.__unicode__()
-    
+
     @property
     def object(self):
         '''Instance of :attr:`model_type` with id :attr:`object_id`.'''
         if not hasattr(self,'_object'):
             self._object = self.model_type.objects.get(id = self.object_id)
         return self._object
-    
+
 
 class Tag(Word):
     pass
@@ -68,21 +68,21 @@ class TagItem():
     '''Model type'''
     object_id = orm.SymbolField()
     '''Model instance id'''
-    
+
     def __unicode__(self):
         return self.word.__unicode__()
-    
+
     @property
     def object(self):
         '''Instance of :attr:`model_type` with id :attr:`object_id`.'''
         if not hasattr(self,'_object'):
             self._object = self.model_type.objects.get(id = self.object_id)
         return self._object
-    
-    
+
+
 class AutoComplete(orm.StdModel):
     '''A model which should be used as signletone::
-    
+
     AutoComplete.search(string_value, maxelem = 50)
     '''
     endchar = '*'
@@ -90,19 +90,19 @@ class AutoComplete(orm.StdModel):
 autocomplete helpers. Default ``2``.'''
     minlen = 2
     '''Minimum length of text to start the search. Default ``2``.'''
-    
+
     id = orm.SymbolField(primary_key = True)
     data = orm.SetField(ordered = True,
                         pickler = False,
                         scorefun = lambda x : 1)
-    
+
     @classmethod
     def me(cls, id = 'en'):
         try:
             return cls.objects.get(id = id)
         except cls.DoesNotExist:
             return cls(id = id).save()
-    
+
     def search(self, value, maxelem = -1):
         '''Search for ``value`` in the ordered dataset and
 return an iterator of suggested words'''
@@ -126,7 +126,7 @@ return an iterator of suggested words'''
                     raise StopIteration
                 if elem.endswith(echar):
                     yield elem[:-N]
-    
+
     def add(self, word):
         '''Add a word to the dataset'''
         dataset = self.data

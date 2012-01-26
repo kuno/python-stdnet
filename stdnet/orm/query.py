@@ -301,7 +301,7 @@ class Manager(object):
 
     def all(self):
         '''Return a :class:`QuerySet` which retrieve all instances\
- of the model.'''
+           of the model.'''
         return self.filter()
 
     def _setmodel(self, model):
@@ -313,7 +313,7 @@ class Manager(object):
 
 class RelatedManager(Manager):
     '''A :class:`Manager` for handling related :class:`stdnet.orm.StdModels`
-to a :class:`stdnet.orm.ForeignKey`.'''
+       to a :class:`stdnet.orm.ForeignKey`.'''
     def __init__(self, model, related, fieldname, obj = None):
         self.model      = model
         self.to         = related
@@ -328,7 +328,7 @@ to a :class:`stdnet.orm.ForeignKey`.'''
 
     def _get_field(self):
         return self.model._meta.dfields[self.fieldname]
-    field = property(_get_field)
+        field = property(_get_field)
 
     def get_related_object(self, id):
         return self.model.objects.get(id = id)
@@ -366,7 +366,7 @@ class M2MRelatedManager(Manager):
         self.to_name = to_name
 
     def add(self, *values):
-        '''Add *value*, an instance of self.to'''
+        '''Add *values*, every member of values is an instance of self.to'''
         for value in values:
             if not isinstance(value,self.to):
                 raise FieldValueError(

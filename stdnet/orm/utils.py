@@ -23,8 +23,8 @@ available an exception will raise. A common use usage pattern::
         return _serializers[name]
     else:
         raise ValueError('Unknown serializer {0}.'.format(name))
-    
-    
+
+
 def register_serializer(name, serializer):
     '''\
 Register a new serializer to the library.
@@ -36,16 +36,16 @@ Register a new serializer to the library.
     if isclass(serializer):
         serializer = serializer()
     _serializers[name] = serializer
-    
-    
+
+
 class Serializer(object):
     '''The stdnet serializer base class.'''
-    
+
     def serialize(self, qs, stream = None, **options):
         stream = stream or StringIO()
         data = self.get_data(qs)
         self.end_serialize(data, stream, **options)
-    
+
     def get_data(self, qs):
         objs = []
         for obj in qs:
@@ -53,24 +53,24 @@ class Serializer(object):
             data['id'] = obj.id
             objs.append(data)
         return objs
-    
+
     def end_serialize(self, data, stream, **options):
         raise NotImplementedError
-    
-    
+
+
 class JsonSerializer(Serializer):
-            
+
     def end_serialize(self, data, stream, **options):
         json.dumps(data,stream,**options)
-        
-        
+
+
 class CsvSerializer(Serializer):
-            
+
     def end_serialize(self, data, stream, **options):
         w = DictWriter(stream,**options)
         for row in data:
             w.write(row)
-            
+
 
 _serializers['json'] = JsonSerializer()
 _serializers['csv'] = CsvSerializer()

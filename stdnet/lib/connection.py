@@ -4,7 +4,7 @@ Since than it has moved on a different directions.
 
 Copyright (c) 2010 Andy McCurdy
 Copyright (c) 2011 Luca Sbardella
-    BSD License   
+    BSD License
 
 
 '''
@@ -25,7 +25,7 @@ class PythonParser(object):
 
     def createReader(self, connection):
         return RedisPythonReader(connection)
-    
+
     def on_connect(self, connection):
         self._sock = connection._sock
         self._reader = self.createReader(connection)
@@ -50,7 +50,7 @@ class PythonParser(object):
 
 
 class HiredisParser(PythonParser):
-    
+
     def createReader(self, connection):
         return hiredis.Reader(protocolError=InvalidResponse,
                               replyError=ResponseError)
@@ -182,22 +182,22 @@ class Connection(object):
         if response.__class__ == ResponseError:
             raise response
         return response
-    
+
     if ispy3k:
         def encode(self, value):
             return value if isinstance(value,bytes) else str(value).encode(
                                         self.encoding,self.encoding_errors)
-            
+
     else:
         def encode(self, value):
             if isinstance(value,unicode):
                 return value.encode(self.encoding,self.encoding_errors)
             else:
                 return str(value)
-    
+
     def _decode(self, value):
         return value.decode(self.encoding,self.encoding_errors)
-    
+
     def __pack_gen(self, args):
         crlf = b'\r\n'
         yield b'*'
@@ -209,16 +209,16 @@ class Connection(object):
             yield crlf
             yield value
             yield crlf
-    
+
     def pack_command(self, *args):
         "Pack a series of arguments into a value Redis command"
         return b''.join(self.__pack_gen(args))
-    
+
 
 class ConnectionPool(object):
     "Generic connection pool"
     default_encoding = 'utf-8'
-    
+
     def __init__(self,
                  connection_class=Connection,
                  max_connections=None,
@@ -235,11 +235,11 @@ class ConnectionPool(object):
     @property
     def db(self):
         return self.connection_kwargs['db']
-    
+
     @property
     def encoding(self):
         return self.connection_kwargs['encoding']
-    
+
     def get_connection(self, command_name, *keys, **options):
         "Get a connection from the pool"
         try:

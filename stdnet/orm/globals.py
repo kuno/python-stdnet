@@ -11,7 +11,7 @@ _model_dict = {}
 def get_model_from_hash(hash):
     if hash in _model_dict:
         return _model_dict[hash]
-    
+
 
 def hashmodel(model, library = None):
     '''Calculate the Hash id of metaclass ``meta``'''
@@ -21,4 +21,4 @@ def hashmodel(model, library = None):
     hash = sha.hexdigest()[:8]
     meta.hash = hash
     _model_dict[hash] = model
-    
+
