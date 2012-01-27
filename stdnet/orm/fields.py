@@ -446,24 +446,30 @@ or :class:`JSONField` fields as more general alternatives.'''
         return self.encoder.dumps(value)
 
 
+class OneToOneField(Field, RelatedObject):
+    """
+    Try mimic the OneToOneField of django orm
+    """
+
+
 class ForeignKey(Field, RelatedObject):
     '''A field defining a one-to-many objects relationship.
-Requires a positional argument: the class to which the model is related.
-To create a recursive relationship, an object that has a many-to-one
-relationship with itself use::
+       Requires a positional argument: the class to which the model is related.
+       To create a recursive relationship, an object that has a many-to-one
+       relationship with itself use::
 
-    orm.ForeignKey('self')
+       orm.ForeignKey('self')
 
-It accepts **related_name** as extra argument. It is the name to use for
-the relation from the related object back to self. For example::
+       It accepts **related_name** as extra argument. It is the name to use for
+       the relation from the related object back to self. For example::
 
-    class Folder(orm.StdModel):
+       class Folder(orm.StdModel):
         name = orm.SymobolField()
 
-    class File(orm.StdModel):
+       class File(orm.StdModel):
         folder = orm.ForeignKey(Folder, related_name = 'files')
 
-'''
+    '''
     type = 'related object'
     internal_type = 'numeric'
     def __init__(self, model, related_name = None, **kwargs):
