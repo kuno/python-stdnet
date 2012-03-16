@@ -386,6 +386,13 @@ class M2MRelatedManager(Manager):
                 self.st.discard(value)
                 related.st.discard(self.instance)
 
+    def clear(self):
+        ''' Another djangolize method, clear all value inside a M2M object '''
+        for value in self.st:
+            related = getattr(value,self.to_name)
+            self.st.discard(value)
+            related.st.discard(self.instance)
+
     def _add(self, value):
         self.st.add(value)
         self.instance.save()
